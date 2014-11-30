@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--全局和主界面-->
+	<string name="str_title">寻猫记</string>
+	<string name="str_findcats">寻猫</string>
+	<string name="str_adopt">领养</string>	
+	<string name="str_help">帮助</string>
+	<string name="str_quit">再按一次退出寻猫记</string>
+	<!--其他界面-->
+	<string name="str_detail">点击查看更多详情</string>
+	<string name="str_refresh">更新</string>
+	<string name="str_add">添加</string>
+	<!--流浪猫地图-->
+	<string name="str_hint">1.点击任意喂食点更新\n2.点击当前位置创建新喂食点\n3.点击返回键退出添加模式</string>	
+	<string name="str_addr">地址</string>
+	<string name="str_catnum">流浪猫数量</string>
+	<string name="str_lastfeed">上次喂食</string>
+	<string name="str_updatetime">更新时间</string>
+	<string name="str_food">食物、水源情况</string>
+	<string name="str_babynum">幼猫数量</string>
+	<string name="str_condition">免疫、绝育情况</string>
+	<string name="str_moreinfo">备注</string>
+	<!--提示信息-->
+	<string name="hint_catnuminfo">必填</string>
+	<string name="hint_babynum"></string>
+	<string name="hint_food">必填</string>
+	<string name="hint_condition"></string>
+	<string name="hint_moreinfo">其他需要补充的信息，最多300个字</string>
+	<string name="hint_age">必填</string>
+	<string name="hint_sex">必填</string>
+	<string name="hint_health">必填，有何种疾病</string>
+	<string name="hint_adopt_condition"> 必填</string>
+	<string name="hint_host">必填</string>
+	<string name="hint_contact">必填，QQ、微信或电话号码</string>
+	<!--领养信息-->
+	<string name="str_city">城市</string>
+	<string name="str_posttime">发布时间</string>
+	<string name="str_age">猫龄</string>
+	<string name="str_sex">性别</string>
+	<string name="str_health">健康状况</string>
+	<string name="str_contactinfo">联系人和联系方式</string>
+	
+	<string name="str_choose">请选择城市</string>
+</resources>

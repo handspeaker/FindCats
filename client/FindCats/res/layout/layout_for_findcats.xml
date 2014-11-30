@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/label_addrinfo"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/str_addr"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/text_addrinfo"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
+        <EditText
+            android:id="@+id/edit_addrinfo"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="text"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/label_updatetime"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/str_updatetime"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/text_updatetime"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/label_catnum"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/str_catnum"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/text_catnum"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
+        <EditText
+            android:id="@+id/edit_catnum"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_catnuminfo"
+            android:inputType="number"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/label_babynum"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/str_babynum"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/text_babynum"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
+        <EditText
+            android:id="@+id/edit_babynum"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_babynum"
+            android:inputType="number"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/label_food"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/str_food"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/text_food"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
+        <EditText
+            android:id="@+id/edit_food"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_food"
+            android:inputType="text"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/label_condition"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/str_condition"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/text_condition"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
+        <EditText
+            android:id="@+id/edit_condition"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_condition"
+            android:inputType="text"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/label_moreinfo"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/str_moreinfo"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/text_moreinfo"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:visibility="gone" />
+
+        <EditText
+            android:id="@+id/edit_moreinfo"
+            style="@style/Standard"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|left"
+            android:gravity="top|left"
+            android:hint="@string/hint_moreinfo"
+            android:inputType="textMultiLine"
+            android:maxLength="300"
+            android:maxLines="3"
+            android:minLines="3"
+            android:visibility="gone" />
+    </LinearLayout>
+
+</ScrollView>
