@@ -45,7 +45,7 @@
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 
     <application
-        android:name="com.handspeaker.findcats.FindCatsApplication"
+        android:name="com.handspeaker.findcats.MainApplication"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/str_title" >
@@ -54,7 +54,7 @@
             android:value="PEAsLsqiziiOdZUfG00ugO9j" />
 
         <activity
-            android:name="com.handspeaker.findcats.EnterActivity"
+            android:name="com.handspeaker.findcats.EntranceActivity"
             android:label="@string/str_title"
             android:theme="@android:style/Theme.Black.NoTitleBar" >
             <intent-filter>

@@ -3,6 +3,9 @@ package com.handspeaker.findcats;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.baidu.location.BDLocation;
 import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
@@ -14,6 +17,7 @@ import com.baidu.mapapi.map.BitmapDescriptor;
 import com.baidu.mapapi.map.BitmapDescriptorFactory;
 import com.baidu.mapapi.map.InfoWindow;
 import com.baidu.mapapi.map.MapPoi;
+import com.baidu.mapapi.map.MapStatus;
 import com.baidu.mapapi.map.MapStatusUpdate;
 import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
@@ -31,14 +35,21 @@ import com.baidu.mapapi.search.geocode.GeoCoder;
 import com.baidu.mapapi.search.geocode.OnGetGeoCoderResultListener;
 import com.baidu.mapapi.search.geocode.ReverseGeoCodeOption;
 import com.baidu.mapapi.search.geocode.ReverseGeoCodeResult;
+import com.handspeaker.network.OnReceiveDataListener;
+import com.handspeaker.network.PostRequest;
 
+import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -58,7 +69,7 @@ import android.widget.Toast;
  * 
  */
 public class FindCatsActivity extends ActionBarActivity implements
-		SensorEventListener, OnGetGeoCoderResultListener {
+		SensorEventListener, OnGetGeoCoderResultListener,OnReceiveDataListener {
 	public static final String FIND_CATS = "findcats";
 
 	public static final int FIND_STATE = 0;
@@ -74,8 +85,7 @@ public class FindCatsActivity extends ActionBarActivity implements
 	private InfoWindow mInfoWindow;
 	private BitmapDescriptor markerImage;
 	private MarkerOptions options;
-	// //////////////////////////////////
-	// location realated
+	// location related
 	private LocationClient mLocationClient;
 	// public MyLocationListenner myListener;
 	private boolean isFirstLoc;
@@ -84,12 +94,26 @@ public class FindCatsActivity extends ActionBarActivity implements
 	private Sensor mOrientation;
 	private BDLocation lastLocation;
 	private BDLocationListener mBDLocationListener;
-	//
+	// popup related
 	private TextView textViewHint;
 	private int current_state;
 	private boolean showInfoWindow;
 	private boolean isLoading;
 	private Marker lastMark;
+
+	private ProgressDialog progressDialog;
+	private Handler handler = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			switch (msg.arg1) {
+			case 0:
+				progressDialog.dismiss();
+				break;
+			default:
+				break;
+			}
+		}
+	};
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -97,9 +121,8 @@ public class FindCatsActivity extends ActionBarActivity implements
 		setContentView(R.layout.activity_findcats);
 		ActionBar actionBar = this.getSupportActionBar();
 		actionBar.setDisplayHomeAsUpEnabled(true);
-
 		initUserInterface();
-		loadData();
+		// loadData();
 	}
 
 	/**
@@ -162,15 +185,15 @@ public class FindCatsActivity extends ActionBarActivity implements
 							lastLocation.getLongitude());
 					mGeoCoder.reverseGeoCode(new ReverseGeoCodeOption()
 							.location(latlng));
-//					// add-location activity
-//					Intent intent = new Intent();
-//					Bundle bundle = new Bundle();
-//					// put some data
-//					intent.putExtras(bundle);
-//					intent.setClass(FindCatsActivity.this,
-//							AddLocationActivity.class);
-//					startActivityForResult(intent, ADD_LOCATION);
-//					return true;
+					// // add-location activity
+					// Intent intent = new Intent();
+					// Bundle bundle = new Bundle();
+					// // put some data
+					// intent.putExtras(bundle);
+					// intent.setClass(FindCatsActivity.this,
+					// AddLocationActivity.class);
+					// startActivityForResult(intent, ADD_LOCATION);
+					// return true;
 				}
 				return true;
 			}
@@ -191,10 +214,31 @@ public class FindCatsActivity extends ActionBarActivity implements
 				lastLocation = location;
 				if (isFirstLoc) {
 					isFirstLoc = false;
-					LatLng ll = new LatLng(location.getLatitude(),
-							location.getLongitude());
-					MapStatusUpdate u = MapStatusUpdateFactory.newLatLng(ll);
-					mBaiduMap.animateMapStatus(u);
+					int locType = location.getLocType();
+					Log.v(MainApplication.tag, "locType" + locType);
+					// 如果定位成功，利用当前定位坐标载入周围的喂食点
+					// 如果定位失败，则载入之前的保存的坐标，并利用其载入周围的喂食点
+					if (locType != BDLocation.TypeGpsLocation
+							|| locType != BDLocation.TypeNetWorkLocation
+							|| locType != BDLocation.TypeOffLineLocation) {
+						MapStatusUpdate u = MapStatusUpdateFactory
+								.newLatLng(new LatLng(location.getLatitude(),
+										location.getLongitude()));
+						mBaiduMap.animateMapStatus(u);
+					} else {
+						SharedPreferences sharedPreferences = getPreferences(Activity.MODE_PRIVATE);
+						double latitude = Double.parseDouble(sharedPreferences
+								.getString("latitude",
+										EntranceActivity.DEFALUT_LATITUDE));
+						double longitude = Double.parseDouble(sharedPreferences
+								.getString("longitude",
+										EntranceActivity.DEFALUT_LONGITUDE));
+						MapStatusUpdate u = MapStatusUpdateFactory
+								.newLatLng(new LatLng(latitude, longitude));
+						mBaiduMap.animateMapStatus(u);
+						
+					}
+					loadData();
 				}
 			}
 		};
@@ -211,28 +255,54 @@ public class FindCatsActivity extends ActionBarActivity implements
 				.fromResource(R.drawable.icon_gcoding);
 	}
 
+	private void showDialog() {
+		progressDialog = new ProgressDialog(this);
+		progressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+		progressDialog.setCancelable(false);
+		progressDialog.setCanceledOnTouchOutside(false);
+		progressDialog.setTitle("正在加载");
+		progressDialog.setMessage("请稍等");
+		progressDialog.show();
+	}
+	
 	/**
 	 * load data from server. currently the server has not been established, so
 	 * this function will generate fake data
+	 * @throws JSONException 
 	 */
-	public void loadData() {
+	public void loadData(){
 		Log.v("FIND_CATS", "load data!");
-		options.icon(markerImage);
-		options.zIndex(7);
-		options.draggable(false);
-		// add marker overlay
-		LatLng[] locations = new LatLng[4];
-		locations[0] = new LatLng(39.963175, 116.400244);
-		locations[1] = new LatLng(39.942821, 116.369199);
-		locations[2] = new LatLng(39.939723, 116.425541);
-		locations[3] = new LatLng(39.906965, 116.401394);
-		for (int i = 0; i < 4; ++i) {
-			options.position(locations[i]);
-			Marker marker = (Marker) mBaiduMap.addOverlay(options);
-			mMakers.add(marker);
+		isLoading=true;
+		showDialog();
+		//发送当前地图的中心点给服务器，目前一次性返回所有结果，以后会根据中心点坐标返回一定范围内的结果
+		JSONObject jsonObject = new JSONObject();
+		MapStatus mapStatus=mBaiduMap.getMapStatus();
+		try {
+			jsonObject.put("latitude", mapStatus.target.latitude);
+			jsonObject.put("longitude", mapStatus.target.longitude);
+		} catch (JSONException e) {
+			e.printStackTrace();
 		}
+		PostRequest postRequest=PostRequest.getPostRequest();
+		postRequest.iniRequest(PostRequest.QUERY,jsonObject);
+		postRequest.setOnReceiveDataListener(this);
+		postRequest.execute();
+//		options.icon(markerImage);
+//		options.zIndex(7);
+//		options.draggable(false);
+		// add marker overlay
+//		LatLng[] locations = new LatLng[4];
+//		locations[0] = new LatLng(39.963175, 116.400244);
+//		locations[1] = new LatLng(39.942821, 116.369199);
+//		locations[2] = new LatLng(39.939723, 116.425541);
+//		locations[3] = new LatLng(39.906965, 116.401394);
+//		for (int i = 0; i < 4; ++i) {
+//			options.position(locations[i]);
+//			Marker marker = (Marker) mBaiduMap.addOverlay(options);
+//			mMakers.add(marker);
+//		}
 		isLoading = false;
-		Toast.makeText(this, "load data", Toast.LENGTH_SHORT).show();
+//		Toast.makeText(this, "load data", Toast.LENGTH_SHORT).show();
 	}
 
 	/**
@@ -258,7 +328,8 @@ public class FindCatsActivity extends ActionBarActivity implements
 				// marker.setPosition(llNew);
 				Intent intent = new Intent();
 				// put some data
-				intent.setClass(FindCatsActivity.this, DetailLocationActivity.class);
+				intent.setClass(FindCatsActivity.this,
+						DetailLocationActivity.class);
 				startActivity(intent);
 			}
 		};
@@ -315,6 +386,13 @@ public class FindCatsActivity extends ActionBarActivity implements
 
 	@Override
 	protected void onDestroy() {
+		Log.v(MainApplication.tag, "findcats destroy");
+		MyLocationData locationData=mBaiduMap.getLocationData();
+
+		Intent intent=new Intent();
+		intent.putExtra("latitude", Double.toString(locationData.latitude));
+		intent.putExtra("longitude", Double.toString(locationData.longitude));
+		setResult(EntranceActivity.RESULT_OK, intent);
 		mLocationClient.stop();
 		mLocationClient.unRegisterLocationListener(mBDLocationListener);
 		mBaiduMap.setMyLocationEnabled(false);
@@ -410,5 +488,10 @@ public class FindCatsActivity extends ActionBarActivity implements
 			intent.setClass(FindCatsActivity.this, NewLocationActivity.class);
 			startActivityForResult(intent, ADD_LOCATION);
 		}
+	}
+
+	@Override
+	public void onReceiveData(String strResult, int StatusCode) {
+		
 	}
 }

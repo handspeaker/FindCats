@@ -4,25 +4,23 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.apache.http.HttpResponse;
-import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import com.handspeaker.findcats.MainApplication;
 
 import android.os.Handler;
 import android.os.Message;
@@ -36,7 +34,6 @@ import android.util.Log;
  */
 public class PostRequest implements Runnable {
 	// 服务的网址
-	public static final String tag = "enter";
 	public static final String URL = "http://handspeaker.xicp.net";
 	// 4种请求，搜索，添加，更新,ping
 	public final static String QUERY = "/query";
@@ -48,17 +45,17 @@ public class PostRequest implements Runnable {
 	private int socketTimeout = 60000;
 	private String strResult;
 //	private JSONObject sendObj;
-//	private JSONObject rootObj;
+	private JSONObject rootObj;
 	private HttpClient httpClient;
 	private HttpPost httpPost;
 	private HttpResponse httpResponse;
 //	private ArrayList<NameValuePair> nameValuePairs;
 	//线程相关
 	private ExecutorService executorService;
-	private Handler handler;
+	private OnReceiveDataListener onReceiveDataListener;
+//	private Handler handler;
 	//单例对象
 	private static PostRequest postRequest=null;
-	
 	// private String requestType;
 	// public JSONArray queryFaceArray=null;
 	// public String md5=null;
@@ -81,29 +78,19 @@ public class PostRequest implements Runnable {
 	 */
 	private PostRequest() {
 		strResult = null;
-//		sendObj=null;
 //		rootObj = null;
 		httpResponse = null;
-		handler=null;
+//		handler=null;
 		httpPost = new HttpPost();
 		httpClient = new DefaultHttpClient();
-//		nameValuePairs=new ArrayList<NameValuePair>(15);
 		executorService=Executors.newFixedThreadPool(1);
 	}
 
-//	/**
-//	 * 添加需要发送的数据
-//	 * @param pair 需要发送的键值对
-//	 */
-//	public void addData(BasicNameValuePair pair)
-//	{
-//		try {
-//			sendObj.put(pair.getName(), pair.getValue());
-//		} catch (JSONException e) {
-//			e.printStackTrace();
-//		}
-////		nameValuePairs.add(pair);
-//	}
+	public void setOnReceiveDataListener(OnReceiveDataListener listener)
+	{
+		onReceiveDataListener=listener;
+	}
+	
 	/**
 	 * 根据不同的请求类型来初始化httppost
 	 * 
@@ -112,10 +99,8 @@ public class PostRequest implements Runnable {
 	 * @param nameValuePairs
 	 *            需要传递的参数
 	 */
-	public void iniRequest(String requestType,Handler handler,JSONObject jsonObject) {
-		this.handler=handler;
-//		httpPost.setHeader("Content-Type", "text/plain");
-//		httpPost.addHeader("Content-Type", "text/html");
+	public void iniRequest(String requestType,JSONObject jsonObject) {
+//		this.handler=handler;
 		httpPost.addHeader("Content-Type", "text/json");
 		httpPost.addHeader("charset", "UTF-8");
 		
@@ -123,19 +108,17 @@ public class PostRequest implements Runnable {
 		HttpParams httpParameters = httpPost.getParams();
 		HttpConnectionParams.setConnectionTimeout(httpParameters,
 				connectionTimeout);
-//		httpParameters.setParameter("charset", "UTF-8");
 		HttpConnectionParams.setSoTimeout(httpParameters, socketTimeout);
 		httpPost.setParams(httpParameters);
 		try {
 			httpPost.setURI(new URI(URL + requestType));
 			httpPost.setEntity(new StringEntity(jsonObject.toString(),HTTP.UTF_8));
-//			httpPost.setEntity(new UrlEncodedFormEntity(nameValuePairs,HTTP.UTF_8));
 		} catch (URISyntaxException e1) {
 			e1.printStackTrace();
-			Log.v(tag, "URI failed");
+			Log.v(MainApplication.tag, "URI failed");
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
-			Log.v(tag, "setEntity failed");
+			Log.v(MainApplication.tag, "setEntity failed");
 		}
 	}
 
@@ -146,32 +129,102 @@ public class PostRequest implements Runnable {
 	
 	@Override
 	public void run() {
-		Message message=new Message();
-		message.arg1=1;
+//		Message message=new Message();
+//		message.arg1=1;
 		try {
 			long start_time = System.currentTimeMillis();
 			httpResponse = httpClient.execute(httpPost);
 			long current_time = System.currentTimeMillis();
 			strResult = EntityUtils.toString(httpResponse.getEntity());
-			Log.v(tag, "time consume:" + (current_time - start_time));
-			Log.v(tag, "result code:"
+			Log.v(MainApplication.tag, strResult);
+			Log.v(MainApplication.tag, "time consume:" + (current_time - start_time));
+			Log.v(MainApplication.tag, "result code:"
 					+ httpResponse.getStatusLine().getStatusCode() + "");
 		} catch (ClientProtocolException e1) {
-			message.arg1=-1;
+//			message.arg1=-1;
+			strResult=null;
 			e1.printStackTrace();
 			
 		} catch (IOException e1) {
-			message.arg1=-2;
+//			message.arg1=-2;
+			strResult=null;
 			e1.printStackTrace();
 		}
 		finally{
-//			nameValuePairs.clear();
-			if(handler!=null)
-			{
-				handler.sendMessage(message);
-			}
+			onReceiveDataListener.onReceiveData(strResult,httpResponse.getStatusLine().getStatusCode());
+//			if(handler!=null)
+//			{
+//				handler.sendMessage(message);
+//			}
 		}
 	}
+
+	 /**
+	 * 解析服务器返回的结果
+	 * @param requestType 不同的请求类型
+	 * @return 成功:1，失败：<0
+	 */
+	 public int analyzeResult(String requestType)
+	 {
+		 if(strResult==null)
+		 {
+			 return -1;
+		 }
+		 else
+		 {
+			if(requestType.equals(PING))
+			{
+				try {
+					rootObj = new JSONObject(strResult);
+					rootObj.getInt("state");
+					return rootObj.getInt("state");
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+			}
+		 }
+	 // if(requestType.equals(QUERY))
+	 // {
+	 // try
+	 // {
+	 // rootObj = new JSONObject(strResult);
+	 // int ret=rootObj.getInt("ret");
+	 // if(ret!=0)
+	 // return 0;
+	 // queryFaceArray=root.getJSONArray("res");
+	 // }
+	 // catch (JSONException e1)
+	 // {
+	 // return 0;
+	 // }
+	 // return 1;
+	 // }
+	 // else if(requestType.equals(ADD))
+	 // {
+	 // try {
+	 // root = new JSONObject(regResult);
+	 // int ret=root.getInt("ret");
+	 // md5=root.getString("md5");
+	 // return ret;
+	 // } catch (JSONException e) {
+	 // e.printStackTrace();
+	 // return 0;
+	 // }
+	 // }
+	 // else if(requestType.equals(UPDATE))
+	 // {
+	 // try {
+	 // root = new JSONObject(regResult);
+	 // int ret=root.getInt("ret");
+	 // return ret;
+	 // } catch (JSONException e) {
+	 // e.printStackTrace();
+	 // return 0;
+	 // }
+	 // }
+//	 }
+		 return 1;
+	 }	
 	// /**
 	// * 添加新喂食点/领养消息
 	// * @param uID 当前用户id
@@ -289,59 +342,5 @@ public class PostRequest implements Runnable {
 	// } catch (IOException e1) {
 	// e1.printStackTrace();
 	// }
-	// }
-	// /**
-	// * 解析服务器返回的结果
-	// * @param requestType 不同的请求类型
-	// * @return 成功:1，失败：<0
-	// */
-	// public int analyzeResult(String requestType)
-	// {
-	// if(strResult==null)
-	// {return -1;}
-	// else
-	// {
-	//
-	// // if(requestType.equals(QUERY))
-	// // {
-	// // try
-	// // {
-	// // rootObj = new JSONObject(strResult);
-	// // int ret=rootObj.getInt("ret");
-	// // if(ret!=0)
-	// // return 0;
-	// // queryFaceArray=root.getJSONArray("res");
-	// // }
-	// // catch (JSONException e1)
-	// // {
-	// // return 0;
-	// // }
-	// // return 1;
-	// // }
-	// // else if(requestType.equals(ADD))
-	// // {
-	// // try {
-	// // root = new JSONObject(regResult);
-	// // int ret=root.getInt("ret");
-	// // md5=root.getString("md5");
-	// // return ret;
-	// // } catch (JSONException e) {
-	// // e.printStackTrace();
-	// // return 0;
-	// // }
-	// // }
-	// // else if(requestType.equals(UPDATE))
-	// // {
-	// // try {
-	// // root = new JSONObject(regResult);
-	// // int ret=root.getInt("ret");
-	// // return ret;
-	// // } catch (JSONException e) {
-	// // e.printStackTrace();
-	// // return 0;
-	// // }
-	// // }
-	// }
-	// return 1;
 	// }
 }
